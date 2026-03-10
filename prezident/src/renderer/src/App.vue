@@ -1,26 +1,35 @@
 <script setup lang="ts">
-import Versions from './components/Versions.vue'
+import { ref, computed } from 'vue';
+import MarkdownIt from 'markdown-it';
 
-const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+const md = new MarkdownIt({
+  html: true,        
+  linkify: true,     
+  typographer: true  
+});
+
+const markdownText = ref<string>('');
+
+const renderedHtml = computed<string>(() => {
+  return md.render(markdownText.value);
+});
+
 </script>
 
 <template>
-  <img alt="logo" class="logo" src="./assets/electron.svg" />
-  <div class="creator">Powered by electron-vite</div>
-  <div class="text">
-    Build an Electron app with
-    <span class="vue">Vue</span>
-    and
-    <span class="ts">TypeScript</span>
+  <div>
+    <h2>Éditeur Markdown</h2>
+    <textarea v-model="markdownText" rows="8" cols="50"></textarea>
+
+    <h2>Résultat HTML</h2>
+    <div v-html="renderedHtml"></div>
   </div>
-  <p class="tip">Please try pressing <code>F12</code> to open the devTool</p>
-  <div class="actions">
-    <div class="action">
-      <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">Documentation</a>
-    </div>
-    <div class="action">
-      <a target="_blank" rel="noreferrer" @click="ipcHandle">Send IPC</a>
-    </div>
-  </div>
-  <Versions />
+
 </template>
+
+<style scoped>
+textarea {
+  width: 100%;
+  font-family: monospace;
+}
+</style>
