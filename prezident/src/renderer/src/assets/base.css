@@ -1,67 +1,148 @@
-:root {
-  --ev-c-white: #ffffff;
-  --ev-c-white-soft: #f8f8f8;
-  --ev-c-white-mute: #f2f2f2;
-
-  --ev-c-black: #1b1b1f;
-  --ev-c-black-soft: #222222;
-  --ev-c-black-mute: #282828;
-
-  --ev-c-gray-1: #515c67;
-  --ev-c-gray-2: #414853;
-  --ev-c-gray-3: #32363f;
-
-  --ev-c-text-1: rgba(255, 255, 245, 0.86);
-  --ev-c-text-2: rgba(235, 235, 245, 0.6);
-  --ev-c-text-3: rgba(235, 235, 245, 0.38);
-
-  --ev-button-alt-border: transparent;
-  --ev-button-alt-text: var(--ev-c-text-1);
-  --ev-button-alt-bg: var(--ev-c-gray-3);
-  --ev-button-alt-hover-border: transparent;
-  --ev-button-alt-hover-text: var(--ev-c-text-1);
-  --ev-button-alt-hover-bg: var(--ev-c-gray-2);
-}
-
-:root {
-  --color-background: var(--ev-c-black);
-  --color-background-soft: var(--ev-c-black-soft);
-  --color-background-mute: var(--ev-c-black-mute);
-
-  --color-text: var(--ev-c-text-1);
-}
+/* styles.css */
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-  margin: 0;
-  font-weight: normal;
-}
-
-ul {
-  list-style: none;
 }
 
 body {
-  min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
-  line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: #ffffff;
+}
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barre supérieure */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+.topbar-left,
+.topbar-right {
+  display: flex;
+  gap: 8px;
+}
+
+.topbar-title {
+  font-size: 14px;
+  color: #333;
+}
+
+/* Boutons */
+
+.btn {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  background: #333;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #111;
+}
+
+/* Onglets */
+
+.tabs {
+  display: flex;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid #ddd;
+  font-size: 13px;
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  padding: 8px 0;
+  cursor: pointer;
+  color: #555;
+}
+
+.tab.active {
+  color: #000;
+  border-bottom: 2px solid #000;
+}
+
+/* Zone principale grise */
+
+.workspace {
+  flex: 1;
+  margin: 8px 16px 16px;
+  background: #e0e0e0;
+}
+/* Zone principale grise + contenus */
+.workspace {
+  flex: 1;
+  margin: 8px 16px 16px;
+  background: #e0e0e0;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 0; /* Important pour flex */
+}
+
+/* Textareas */
+.workspace textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  resize: none; /* Désactive redimensionnement manuel */
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  background: white;
+  box-sizing: border-box;
+}
+
+/* Liste Assets */
+.workspace #Assets {
+  width: 100%;
+  padding: 12px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  list-style: none;
+}
+
+.workspace #Assets ul {
+  padding: 8px 12px;
+  margin: 4px 0;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+}
+
+/* Preview (placeholder) */
+.workspace #Preview {
+  width: 100%;
+  height: 500px;
+  background: white;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 16px;
 }
