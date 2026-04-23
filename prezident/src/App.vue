@@ -1,160 +1,256 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { invoke } from "@tauri-apps/api/core";
+import { onMounted } from 'vue';
 
-const greetMsg = ref("");
-const name = ref("");
+onMounted(() => {
+  const tabs = document.querySelectorAll<HTMLElement>('.tab');
 
-async function greet() {
-  // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-  greetMsg.value = await invoke("greet", { name: name.value });
-}
+  const sections: Record<string, HTMLElement | null> = {
+    Config: document.getElementById('Config'),
+    Presentation: document.getElementById('Prez'),
+    Stylesheet: document.getElementById('Stylesheet'),
+    Assets: document.getElementById('Assets'),
+    Preview: document.getElementById('Preview'),
+  };
+
+  const hideAllSections = () => {
+    Object.values(sections).forEach((section) => {
+      if (section) section.style.display = 'none';
+    });
+  };
+
+  hideAllSections();
+  sections.Config?.style.setProperty('display', 'block');
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      hideAllSections();
+
+      const key = tab.textContent?.trim();
+      const targetSection = key ? sections[key] : null;
+
+      if (targetSection) {
+        targetSection.style.display = 'block';
+      }
+
+      console.log(`Onglet: ${key}`);
+    });
+  });
+});
 </script>
 
 <template>
-  <main class="container">
-    <h1>Welcome to Tauri + Vue</h1>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>non prez</title>
+  <link rel="stylesheet" href="/src/assets/base.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn btn-primary">New prez</button>
+        <button class="btn btn-primary">Save</button>
+        <button class="btn btn-primary">Open</button>
+      </div>
+      <div class="topbar-title" id="PrezName">non prez</div>
+      <div class="topbar-right">
+        <button class="btn btn-primary">Presentation</button>
+      </div>
+    </header>
 
-    <div class="row">
-      <a href="https://vite.dev" target="_blank">
-        <img src="/vite.svg" class="logo vite" alt="Vite logo" />
-      </a>
-      <a href="https://tauri.app" target="_blank">
-        <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
-      </a>
-      <a href="https://vuejs.org/" target="_blank">
-        <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-      </a>
-    </div>
-    <p>Click on the Tauri, Vite, and Vue logos to learn more.</p>
+    <nav class="tabs">
+      <button class="tab active">Config</button>
+      <button class="tab">Presentation</button>
+      <button class="tab">Stylesheet</button>
+      <button class="tab">Assets</button>
+      <button class="tab">Preview</button>
+    </nav>
 
-    <form class="row" @submit.prevent="greet">
-      <input id="greet-input" v-model="name" placeholder="Enter a name..." />
-      <button type="submit">Greet</button>
-    </form>
-    <p>{{ greetMsg }}</p>
-  </main>
+    <main class="workspace">
+      <!-- Elements visible en Config -->
+      <textarea id="Config"></textarea>
+
+      <!-- Elements visible en Presentation -->
+      <textarea id="Prez"></textarea>
+
+      <!-- Elements visible en Stylesheet -->
+      <textarea id="Stylesheet"></textarea>
+
+      <!-- Elements visible en Assets -->
+      <div id="Assets">
+        <button id="AddAsset" class="btn btn-primary">Add +</button>
+        <li>
+          <ul> image.png </ul>
+          <ul> image2.jpg </ul>
+          <ul> code.js </ul>
+          <ul> code2.ts </ul>
+        </li>
+      </div>
+      <!-- temporaire faire un template generé avec la listes des fichiers en assets -->
+
+      <!-- Elements visible en Preview -->
+      <!-- a remplir avec le template d'affichage -->
+    </main>
+  </div>
+</body>
+</html>
 </template>
 
 <style scoped>
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #249b73);
-}
-
 </style>
+
 <style>
-:root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
+/* styles.css */
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-.container {
+body {
   margin: 0;
-  padding-top: 10vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: #ffffff;
+}
+
+.app {
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
-}
+/* Barre supérieure */
 
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
+.topbar {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+.topbar-left,
+.topbar-right {
+  display: flex;
+  gap: 8px;
 }
 
-a:hover {
-  color: #535bf2;
+.topbar-title {
+  font-size: 14px;
+  color: #333;
 }
 
-h1 {
-  text-align: center;
-}
+/* Boutons */
 
-input,
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
+.btn {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-size: 13px;
   cursor: pointer;
+  background: #333;
+  color: #fff;
 }
 
-button:hover {
-  border-color: #396cd8;
-}
-button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
+.btn-primary:hover {
+  background: #111;
 }
 
-input,
-button {
-  outline: none;
+/* Onglets */
+
+.tabs {
+  display: flex;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid #ddd;
+  font-size: 13px;
 }
 
-#greet-input {
-  margin-right: 5px;
+.tab {
+  border: none;
+  background: transparent;
+  padding: 8px 0;
+  cursor: pointer;
+  color: #555;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
-  }
+.tab.active {
+  color: #000;
+  border-bottom: 2px solid #000;
+}
 
-  a:hover {
-    color: #24c8db;
-  }
+/* Zone principale grise */
 
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
-  }
-  button:active {
-    background-color: #0f0f0f69;
-  }
+.workspace {
+  flex: 1;
+  margin: 8px 16px 16px;
+  background: #e0e0e0;
+}
+/* Zone principale grise + contenus */
+.workspace {
+  flex: 1;
+  margin: 8px 16px 16px;
+  background: #e0e0e0;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 0; /* Important pour flex */
+}
+
+/* Textareas */
+.workspace textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  resize: none; /* Désactive redimensionnement manuel */
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  background: white;
+  box-sizing: border-box;
+}
+
+/* Liste Assets */
+.workspace #Assets {
+  width: 100%;
+  padding: 12px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  list-style: none;
+}
+
+.workspace #Assets ul {
+  padding: 8px 12px;
+  margin: 4px 0;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+}
+
+/* Preview (placeholder) */
+.workspace #Preview {
+  width: 100%;
+  height: 500px;
+  background: white;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 16px;
 }
 
 </style>
