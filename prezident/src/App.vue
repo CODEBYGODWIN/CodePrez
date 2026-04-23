@@ -1,5 +1,32 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
+
+const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
+const prezContent = ref('');
+const stylesheetContent = ref('');
+
+async function handleSave() {
+  const folder = await open({
+    directory: true,
+    title: 'Choisir un dossier de sauvegarde',
+  });
+
+  if (!folder) return;
+
+  try {
+    await invoke('save_project', {
+      folderPath: folder as string,
+      config: configContent.value,
+      presentation: prezContent.value,
+      stylesheet: stylesheetContent.value,
+    });
+    alert(`Projet sauvegardé dans :\n${folder}`);
+  } catch (err) {
+    alert(`Erreur lors de la sauvegarde :\n${err}`);
+  }
+}
 
 onMounted(() => {
   const tabs = document.querySelectorAll<HTMLElement>('.tab');
@@ -34,8 +61,6 @@ onMounted(() => {
       if (targetSection) {
         targetSection.style.display = 'block';
       }
-
-      console.log(`Onglet: ${key}`);
     });
   });
 });
@@ -53,7 +78,7 @@ onMounted(() => {
     <header class="topbar">
       <div class="topbar-left">
         <button class="btn btn-primary">New prez</button>
-        <button class="btn btn-primary">Save</button>
+        <button class="btn btn-primary" @click="handleSave">Save</button>
         <button class="btn btn-primary">Open</button>
       </div>
       <div class="topbar-title" id="PrezName">non prez</div>
@@ -71,16 +96,10 @@ onMounted(() => {
     </nav>
 
     <main class="workspace">
-      <!-- Elements visible en Config -->
-      <textarea id="Config"></textarea>
+      <textarea id="Config" v-model="configContent"></textarea>
+      <textarea id="Prez" v-model="prezContent"></textarea>
+      <textarea id="Stylesheet" v-model="stylesheetContent"></textarea>
 
-      <!-- Elements visible en Presentation -->
-      <textarea id="Prez"></textarea>
-
-      <!-- Elements visible en Stylesheet -->
-      <textarea id="Stylesheet"></textarea>
-
-      <!-- Elements visible en Assets -->
       <div id="Assets">
         <button id="AddAsset" class="btn btn-primary">Add +</button>
         <li>
@@ -90,10 +109,8 @@ onMounted(() => {
           <ul> code2.ts </ul>
         </li>
       </div>
-      <!-- temporaire faire un template generé avec la listes des fichiers en assets -->
 
-      <!-- Elements visible en Preview -->
-      <!-- a remplir avec le template d'affichage -->
+      <div id="Preview"></div>
     </main>
   </div>
 </body>
@@ -104,8 +121,6 @@ onMounted(() => {
 </style>
 
 <style>
-/* styles.css */
-
 *,
 *::before,
 *::after {
@@ -125,8 +140,6 @@ body {
   flex-direction: column;
 }
 
-/* Barre supérieure */
-
 .topbar {
   display: flex;
   align-items: center;
@@ -145,8 +158,6 @@ body {
   color: #333;
 }
 
-/* Boutons */
-
 .btn {
   border: none;
   border-radius: 4px;
@@ -160,8 +171,6 @@ body {
 .btn-primary:hover {
   background: #111;
 }
-
-/* Onglets */
 
 .tabs {
   display: flex;
@@ -184,14 +193,6 @@ body {
   border-bottom: 2px solid #000;
 }
 
-/* Zone principale grise */
-
-.workspace {
-  flex: 1;
-  margin: 8px 16px 16px;
-  background: #e0e0e0;
-}
-/* Zone principale grise + contenus */
 .workspace {
   flex: 1;
   margin: 8px 16px 16px;
@@ -200,15 +201,14 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  min-height: 0; /* Important pour flex */
+  min-height: 0;
 }
 
-/* Textareas */
 .workspace textarea {
   width: 100%;
   height: 100%;
   min-height: 400px;
-  resize: none; /* Désactive redimensionnement manuel */
+  resize: none;
   padding: 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -219,7 +219,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Liste Assets */
 .workspace #Assets {
   width: 100%;
   padding: 12px;
@@ -239,7 +238,6 @@ body {
   font-size: 13px;
 }
 
-/* Preview (placeholder) */
 .workspace #Preview {
   width: 100%;
   height: 500px;
@@ -252,5 +250,4 @@ body {
   color: #999;
   font-size: 16px;
 }
-
 </style>
