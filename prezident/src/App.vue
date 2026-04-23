@@ -4,7 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 
 const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
-const prezContent = ref('');
+const markdownText = ref<string>('');
 const stylesheetContent = ref('');
 
 async function handleSave() {
@@ -19,7 +19,7 @@ async function handleSave() {
     await invoke('save_project', {
       folderPath: folder as string,
       config: configContent.value,
-      presentation: prezContent.value,
+      presentation: markdownText.value,
       stylesheet: stylesheetContent.value,
     });
     alert(`Projet sauvegardé dans :\n${folder}`);
@@ -97,7 +97,7 @@ onMounted(() => {
 
     <main class="workspace">
       <textarea id="Config" v-model="configContent"></textarea>
-      <textarea id="Prez" v-model="prezContent"></textarea>
+      <textarea id="Prez" v-model="markdownText"></textarea>
       <textarea id="Stylesheet" v-model="stylesheetContent"></textarea>
 
       <div id="Assets">
