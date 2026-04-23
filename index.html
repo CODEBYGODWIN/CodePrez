@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>non prez</title>
+  <link rel="stylesheet" href="/src/assets/base.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn btn-primary">New prez</button>
+        <button class="btn btn-primary">Save</button>
+        <button class="btn btn-primary">Open</button>
+      </div>
+      <div class="topbar-title" id="PrezName">non prez</div>
+      <div class="topbar-right">
+        <button class="btn btn-primary">Presentation</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active">Config</button>
+      <button class="tab">Presentation</button>
+      <button class="tab">Stylesheet</button>
+      <button class="tab">Assets</button>
+      <button class="tab">Preview</button>
+    </nav>
+
+    <main class="workspace">
+      <!-- Elements visible en Config -->
+      <textarea id="Config"></textarea>
+
+      <!-- Elements visible en Presentation -->
+      <textarea id="Prez"></textarea>
+
+      <!-- Elements visible en Stylesheet -->
+      <textarea id="Stylesheet"></textarea>
+
+      <!-- Elements visible en Assets -->
+      <div id="Assets">
+        <button id="AddAsset" class="btn btn-primary">Add +</button>
+        <li>
+          <ul> image.png </ul>
+          <ul> image2.jpg </ul>
+          <ul> code.js </ul>
+          <ul> code2.ts </ul>
+        </li>
+      </div>
+      <!-- temporaire faire un template generé avec la listes des fichiers en assets -->
+
+      <!-- Elements visible en Preview -->
+      <!-- a remplir avec le template d'affichage -->
+    </main>
+  </div>
+</body>
+
+<script type="module" src="/src/assets/base.js"></script>
+
+</html>
