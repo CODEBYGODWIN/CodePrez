@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted, ref } from 'vue';
+import MarkdownIt from 'markdown-it';
+
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 
@@ -64,6 +66,22 @@ onMounted(() => {
     });
   });
 });
+
+// markdown to html
+const md = new MarkdownIt({
+  html: true,        
+  linkify: true,     
+  typographer: true  
+});
+
+const markdownText = ref<string>('');
+
+const slides = computed<string[]>(() =>
+  markdownText.value
+    .split(/^---$/gm) 
+    .map(s => md.render(s.trim()))
+);
+
 </script>
 
 <template>
@@ -109,16 +127,16 @@ onMounted(() => {
           <ul> code2.ts </ul>
         </li>
       </div>
+      
+      <div id="Preview">
+        <div v-for="(slide, index) in slides" :key="index" v-html="slide"></div>
+      </div>
 
-      <div id="Preview"></div>
     </main>
   </div>
 </body>
 </html>
 </template>
-
-<style scoped>
-</style>
 
 <style>
 *,
@@ -132,6 +150,14 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   background: #ffffff;
+}
+#Preview > div {
+  border: 2px solid #ddd;
+  padding: 20px;
+  margin: 10px 0;
+  page-break-after: always;
+  min-height: 400px;
+  background-color: #fafafa;
 }
 
 .app {
@@ -240,14 +266,23 @@ body {
 
 .workspace #Preview {
   width: 100%;
-  height: 500px;
   background: white;
-  border: 2px dashed #ccc;
+  border: 1px solid #ccc;
   border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.slide {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 20px;
+  min-height: 300px;
+  line-height: 1.6;
   font-size: 16px;
 }
 </style>
