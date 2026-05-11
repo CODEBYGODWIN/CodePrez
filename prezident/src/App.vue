@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import MarkdownIt from 'markdown-it';
 
 import { invoke } from '@tauri-apps/api/core';
@@ -74,8 +74,6 @@ const md = new MarkdownIt({
   typographer: true  
 });
 
-const markdownText = ref<string>('');
-
 const slides = computed<string[]>(() =>
   markdownText.value
     .split(/^---$/gm) 
@@ -115,7 +113,7 @@ const slides = computed<string[]>(() =>
 
     <main class="workspace">
       <textarea id="Config" v-model="configContent"></textarea>
-      <textarea id="Prez" v-model="markdownText"></textarea>
+      <textarea id="Prez" v-model="markdownText" rows="8" cols="50"></textarea>
       <textarea id="Stylesheet" v-model="stylesheetContent"></textarea>
 
       <div id="Assets">
@@ -166,6 +164,8 @@ body {
   flex-direction: column;
 }
 
+/* Barre supérieure */
+
 .topbar {
   display: flex;
   align-items: center;
@@ -184,6 +184,8 @@ body {
   color: #333;
 }
 
+/* Boutons */
+
 .btn {
   border: none;
   border-radius: 4px;
@@ -197,6 +199,8 @@ body {
 .btn-primary:hover {
   background: #111;
 }
+
+/* Onglets */
 
 .tabs {
   display: flex;
@@ -219,6 +223,14 @@ body {
   border-bottom: 2px solid #000;
 }
 
+/* Zone principale grise */
+
+.workspace {
+  flex: 1;
+  margin: 8px 16px 16px;
+  background: #e0e0e0;
+}
+/* Zone principale grise + contenus */
 .workspace {
   flex: 1;
   margin: 8px 16px 16px;
@@ -227,14 +239,15 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  min-height: 0;
+  min-height: 0; /* Important pour flex */
 }
 
+/* Textareas */
 .workspace textarea {
   width: 100%;
   height: 100%;
   min-height: 400px;
-  resize: none;
+  resize: none; /* Désactive redimensionnement manuel */
   padding: 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -245,6 +258,7 @@ body {
   box-sizing: border-box;
 }
 
+/* Liste Assets */
 .workspace #Assets {
   width: 100%;
   padding: 12px;
@@ -285,4 +299,5 @@ body {
   line-height: 1.6;
   font-size: 16px;
 }
+
 </style>
