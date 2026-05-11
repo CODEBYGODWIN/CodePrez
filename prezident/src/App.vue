@@ -108,19 +108,16 @@ const slides = computed<string[]>(() =>
           <ul> code2.ts </ul>
         </li>
       </div>
-      <!-- temporaire faire un template generé avec la listes des fichiers en assets -->
-
-      <!-- Elements visible en Preview -->
-      <div id="Preview" v-for="(slide, index) in slides" :key="index" v-html="slide"></div>
+      
+      <div id="Preview">
+        <div v-for="(slide, index) in slides" :key="index" v-html="slide"></div>
+      </div>
 
     </main>
   </div>
 </body>
 </html>
 </template>
-
-<style scoped>
-</style>
 
 <style>
 /* styles.css */
@@ -136,6 +133,14 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   background: #ffffff;
+}
+#Preview > div {
+  border: 2px solid #ddd;
+  padding: 20px;
+  margin: 10px 0;
+  page-break-after: always;
+  min-height: 400px;
+  background-color: #fafafa;
 }
 
 .app {
