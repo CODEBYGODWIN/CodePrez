@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import MarkdownIt from 'markdown-it';
+import PresentationMode from './components/PresentationMode.vue';
 
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -8,6 +9,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
 const markdownText = ref<string>('');
 const stylesheetContent = ref('');
+const isPresentationMode = ref(false);
 
 async function handleSave() {
   const folder = await open({
@@ -67,6 +69,14 @@ onMounted(() => {
   });
 });
 
+const fullScreen = () => {
+  if (slides.value.length > 0) {
+    isPresentationMode.value = true;
+  } else {
+    alert('Aucune slide trouvée. Veuillez ajouter du contenu dans la section Présentation.');
+  }
+}
+
 // markdown to html
 const md = new MarkdownIt({
   html: true,        
@@ -90,6 +100,13 @@ const slides = computed<string[]>(() =>
   <link rel="stylesheet" href="/src/assets/base.css" />
 </head>
 <body>
+  <PresentationMode 
+    v-if="isPresentationMode" 
+    :slides="slides" 
+    @close="isPresentationMode = false"
+  />
+
+  <!-- Interface Principale -->
   <div class="app">
     <header class="topbar">
       <div class="topbar-left">
@@ -99,7 +116,7 @@ const slides = computed<string[]>(() =>
       </div>
       <div class="topbar-title" id="PrezName">non prez</div>
       <div class="topbar-right">
-        <button class="btn btn-primary">Presentation</button>
+        <button class="btn btn-primary" @click="fullScreen">Presentation</button>
       </div>
     </header>
 
