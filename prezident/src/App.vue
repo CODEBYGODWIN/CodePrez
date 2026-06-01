@@ -3,7 +3,7 @@ import { computed, ref, onMounted } from 'vue';
 import MarkdownIt from 'markdown-it';
 import MarkdownStyle from 'markdown-it-style';
 
-import { invoke } from '@tauri-apps/api/core';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 
 const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
@@ -11,6 +11,9 @@ const markdownText = ref<string>('');
 const markdownStyle = ref<string>('');
 const stylesheetContent = ref('');
 const folderOpened = ref<string>('');
+
+// Expression régulière pour trouver les images Markdown: ![alt](filename)
+const pattern = /!\[(.*?)\]\(([^)\s]+)\)/g;
 
 async function handleOpen() {
   const folder = await open({
@@ -133,7 +136,27 @@ function cssToObject(cssString:string) {
 const slides = computed<string[]>(() =>{
   var obj = cssToObject(markdownStyle.value);
   md.use(MarkdownStyle, obj);
-  return markdownText.value.split(/^---$/gm).map(s => md.render(s.trim()));
+  var cheminPrefixe = folderOpened.value+"\\assets\\";
+  const resultat = markdownText.value.replace(pattern, (match, altText, currentFilename) => {
+  // Vérifier si le chemin est déjà présent
+  const adejaChemin = 
+    currentFilename.startsWith("/") || 
+    currentFilename.startsWith("./") || 
+    currentFilename.startsWith("../") ||
+    currentFilename.startsWith("http://") || 
+    currentFilename.startsWith("https://");
+  
+  if (adejaChemin) {
+    // Chemin déjà présent, ne rien modifier
+    return match;
+  }
+  
+  // Ajouter le préfixe de chemin
+  const newPath = convertFileSrc(`${cheminPrefixe}${currentFilename}`);
+  return `![${altText}](${newPath})`;
+  });
+
+  return resultat.split(/^---$/gm).map(s => md.render(s.trim()));
 }
 );
 
@@ -150,7 +173,6 @@ const slides = computed<string[]>(() =>{
   <div class="app">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="btn btn-primary">New prez</button>
         <button class="btn btn-primary" @click="handleSave">Save</button>
         <button class="btn btn-primary" @click="handleOpen">Open</button>
       </div>
