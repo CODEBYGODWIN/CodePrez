@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import MarkdownIt from 'markdown-it';
+import MarkdownStyle from 'markdown-it-style';
 
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 
 const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
 const markdownText = ref<string>('');
-const stylesheetContent = ref('');
+const markdownStyle = ref<string>('');
 
 async function handleSave() {
   const folder = await open({
@@ -22,7 +23,7 @@ async function handleSave() {
       folderPath: folder as string,
       config: configContent.value,
       presentation: markdownText.value,
-      stylesheet: stylesheetContent.value,
+      stylesheet: markdownStyle.value,
     });
     alert(`Projet sauvegardé dans :\n${folder}`);
   } catch (err) {
@@ -74,10 +75,38 @@ const md = new MarkdownIt({
   typographer: true  
 });
 
-const slides = computed<string[]>(() =>
-  markdownText.value
-    .split(/^---$/gm) 
-    .map(s => md.render(s.trim()))
+function cssToObject(cssString:string) {
+  const result = {};
+  // Supprime les espaces superflus autour des accolades et découpe les blocs
+  const blocks = cssString
+    .replace(/\s*{\s*/g, '{')
+    .replace(/\s*}\s*/g, '}')
+    .trim()
+    .match(/([^{}]+)\{([^{}]*)\}/g);
+
+  if (!blocks) return result;
+
+  for (const block of blocks) {
+    const match = block.match(/([^{}]+)\{([^{}]*)\}/);
+    if (!match) continue;
+
+    const selector = match[1].trim();
+    let styles = match[2].trim();
+
+    // Supprime les points-virgules en fin de chaîne et partout pour uniformiser
+    styles = styles.replace(/;+$/, '').replace(/;\s*/g, ';');
+
+    result[selector] = styles;
+  }
+
+  return result;
+}
+
+const slides = computed<string[]>(() =>{
+  var obj = cssToObject(markdownStyle.value);
+  md.use(MarkdownStyle, obj);
+  return markdownText.value.split(/^---$/gm).map(s => md.render(s.trim()));
+}
 );
 
 </script>
@@ -114,7 +143,7 @@ const slides = computed<string[]>(() =>
     <main class="workspace">
       <textarea id="Config" v-model="configContent"></textarea>
       <textarea id="Prez" v-model="markdownText" rows="8" cols="50"></textarea>
-      <textarea id="Stylesheet" v-model="stylesheetContent"></textarea>
+      <textarea id="Stylesheet" v-model="markdownStyle"></textarea>
 
       <div id="Assets">
         <button id="AddAsset" class="btn btn-primary">Add +</button>
