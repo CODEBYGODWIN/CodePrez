@@ -9,18 +9,46 @@ import { open } from '@tauri-apps/plugin-dialog';
 const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
 const markdownText = ref<string>('');
 const markdownStyle = ref<string>('');
+const stylesheetContent = ref('');
+const folderOpened = ref<string>('');
 
-async function handleSave() {
+async function handleOpen() {
   const folder = await open({
     directory: true,
-    title: 'Choisir un dossier de sauvegarde',
+    title: 'Ouvrir un projet',
   });
 
   if (!folder) return;
 
   try {
-    await invoke('save_project', {
+    const data = await invoke<{ config: string; presentation: string; stylesheet: string }>('open_project', {
       folderPath: folder as string,
+    });
+    configContent.value = data.config;
+    markdownText.value = data.presentation;
+    stylesheetContent.value = data.stylesheet;
+    folderOpened.value = folder as string;
+  } catch (err) {
+    alert(`Erreur lors de l'ouverture :\n${err}`);
+  }
+}
+
+async function handleSave() {
+  let folder = folderOpened.value;
+
+  if (!folder) {
+    const picked = await open({
+      directory: true,
+      title: 'Choisir un dossier de sauvegarde',
+    });
+    if (!picked) return;
+    folder = picked as string;
+    folderOpened.value = folder;
+  }
+
+  try {
+    await invoke('save_project', {
+      folderPath: folder,
       config: configContent.value,
       presentation: markdownText.value,
       stylesheet: markdownStyle.value,
@@ -124,7 +152,7 @@ const slides = computed<string[]>(() =>{
       <div class="topbar-left">
         <button class="btn btn-primary">New prez</button>
         <button class="btn btn-primary" @click="handleSave">Save</button>
-        <button class="btn btn-primary">Open</button>
+        <button class="btn btn-primary" @click="handleOpen">Open</button>
       </div>
       <div class="topbar-title" id="PrezName">non prez</div>
       <div class="topbar-right">
