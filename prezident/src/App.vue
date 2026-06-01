@@ -8,6 +8,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
 const markdownText = ref<string>('');
 const stylesheetContent = ref('');
+const folderOpened = ref<string>('');
 
 async function handleOpen() {
   const folder = await open({
@@ -24,22 +25,28 @@ async function handleOpen() {
     configContent.value = data.config;
     markdownText.value = data.presentation;
     stylesheetContent.value = data.stylesheet;
+    folderOpened.value = folder as string;
   } catch (err) {
     alert(`Erreur lors de l'ouverture :\n${err}`);
   }
 }
 
 async function handleSave() {
-  const folder = await open({
-    directory: true,
-    title: 'Choisir un dossier de sauvegarde',
-  });
+  let folder = folderOpened.value;
 
-  if (!folder) return;
+  if (!folder) {
+    const picked = await open({
+      directory: true,
+      title: 'Choisir un dossier de sauvegarde',
+    });
+    if (!picked) return;
+    folder = picked as string;
+    folderOpened.value = folder;
+  }
 
   try {
     await invoke('save_project', {
-      folderPath: folder as string,
+      folderPath: folder,
       config: configContent.value,
       presentation: markdownText.value,
       stylesheet: stylesheetContent.value,
