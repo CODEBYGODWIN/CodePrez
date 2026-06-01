@@ -9,6 +9,26 @@ const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration":
 const markdownText = ref<string>('');
 const stylesheetContent = ref('');
 
+async function handleOpen() {
+  const folder = await open({
+    directory: true,
+    title: 'Ouvrir un projet',
+  });
+
+  if (!folder) return;
+
+  try {
+    const data = await invoke<{ config: string; presentation: string; stylesheet: string }>('open_project', {
+      folderPath: folder as string,
+    });
+    configContent.value = data.config;
+    markdownText.value = data.presentation;
+    stylesheetContent.value = data.stylesheet;
+  } catch (err) {
+    alert(`Erreur lors de l'ouverture :\n${err}`);
+  }
+}
+
 async function handleSave() {
   const folder = await open({
     directory: true,
@@ -95,7 +115,7 @@ const slides = computed<string[]>(() =>
       <div class="topbar-left">
         <button class="btn btn-primary">New prez</button>
         <button class="btn btn-primary" @click="handleSave">Save</button>
-        <button class="btn btn-primary">Open</button>
+        <button class="btn btn-primary" @click="handleOpen">Open</button>
       </div>
       <div class="topbar-title" id="PrezName">non prez</div>
       <div class="topbar-right">
