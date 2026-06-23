@@ -3,55 +3,57 @@ import { computed, ref, onMounted } from 'vue';
 import MarkdownIt from 'markdown-it';
 
 import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
+import { open, save } from '@tauri-apps/plugin-dialog';
 
 const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
 const markdownText = ref<string>('');
 const stylesheetContent = ref('');
 const folderOpened = ref<string>('');
 
+const CODEPREZ_FILTER = [{ name: 'CodePrez', extensions: ['codeprez'] }];
+
 async function handleOpen() {
-  const folder = await open({
-    directory: true,
-    title: 'Ouvrir un projet',
+  const file = await open({
+    filters: CODEPREZ_FILTER,
+    title: 'Ouvrir une présentation',
   });
 
-  if (!folder) return;
+  if (!file) return;
 
   try {
-    const data = await invoke<{ config: string; presentation: string; stylesheet: string }>('open_project', {
-      folderPath: folder as string,
+    const data = await invoke<{ config: string; presentation: string; stylesheet: string }>('open_codeprez', {
+      filePath: file as string,
     });
     configContent.value = data.config;
     markdownText.value = data.presentation;
     stylesheetContent.value = data.stylesheet;
-    folderOpened.value = folder as string;
+    folderOpened.value = file as string;
   } catch (err) {
     alert(`Erreur lors de l'ouverture :\n${err}`);
   }
 }
 
 async function handleSave() {
-  let folder = folderOpened.value;
+  let filePath = folderOpened.value;
 
-  if (!folder) {
-    const picked = await open({
-      directory: true,
-      title: 'Choisir un dossier de sauvegarde',
+  if (!filePath) {
+    const picked = await save({
+      filters: CODEPREZ_FILTER,
+      title: 'Enregistrer la présentation',
     });
     if (!picked) return;
-    folder = picked as string;
-    folderOpened.value = folder;
+    filePath = picked as string;
+    folderOpened.value = filePath;
   }
 
   try {
-    await invoke('save_project', {
-      folderPath: folder,
+    await invoke('save_codeprez', {
+      filePath,
       config: configContent.value,
       presentation: markdownText.value,
       stylesheet: stylesheetContent.value,
     });
-    alert(`Projet sauvegardé dans :\n${folder}`);
+    alert(`Présentation sauvegardée dans :\n${filePath}`);
   } catch (err) {
     alert(`Erreur lors de la sauvegarde :\n${err}`);
   }
