@@ -11,6 +11,7 @@ const markdownText = ref<string>('');
 const markdownStyle = ref<string>('');
 const stylesheetContent = ref('');
 const folderOpened = ref<string>('');
+const pictures = ref<string[]>([]);
 
 // Expression régulière pour trouver les images Markdown: ![alt](filename)
 const pattern = /!\[(.*?)\]\(([^)\s]+)\)/g;
@@ -22,6 +23,16 @@ async function handleOpen() {
   });
 
   if (!folder) return;
+  try {
+    const files = await invoke<string[]>('list_files', {
+      folderPath: folder + "/assets" as string,
+    });
+
+    pictures.value = files;
+  }
+  catch (err) {
+    alert(`Erreur lors de l'ouverture :\n${err}`);
+  }
 
   try {
     const data = await invoke<{ config: string; presentation: string; stylesheet: string }>('open_project', {
@@ -59,6 +70,35 @@ async function handleSave() {
     alert(`Projet sauvegardé dans :\n${folder}`);
   } catch (err) {
     alert(`Erreur lors de la sauvegarde :\n${err}`);
+  }
+}
+
+async function loadPicture() {
+  const file = await open({
+    title: 'Choisir une image',
+    multiple: false,
+    directory: false,
+    filters: [
+      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] },
+    ],
+  });
+
+  if (!file || Array.isArray(file)) return;
+
+  await invoke('copy_image_to_assets', {
+    sourcePath: file,
+    folderPath: folderOpened.value + '/assets',
+  });
+  
+  try {
+    const files = await invoke<string[]>('list_files', {
+      folderPath: folderOpened.value + "/assets" as string,
+    });
+
+    pictures.value = files;
+  }
+  catch (err) {
+    alert(`Erreur lors de l'ouverture :\n${err}`);
   }
 }
 
@@ -157,7 +197,7 @@ const slides = computed<string[]>(() =>{
   });
 
   return resultat.split(/^---$/gm).map(s => md.render(s.trim()));
-}
+},
 );
 
 </script>
@@ -196,12 +236,11 @@ const slides = computed<string[]>(() =>{
       <textarea id="Stylesheet" v-model="markdownStyle"></textarea>
 
       <div id="Assets">
-        <button id="AddAsset" class="btn btn-primary">Add +</button>
+        <button id="AddAsset" class="btn btn-primary" @click="loadPicture">Add +</button>
         <li>
-          <ul> image.png </ul>
-          <ul> image2.jpg </ul>
-          <ul> code.js </ul>
-          <ul> code2.ts </ul>
+          <ul v-for="(picture, index) in pictures" :key="index">
+            {{ picture }}
+          </ul>
         </li>
       </div>
       
