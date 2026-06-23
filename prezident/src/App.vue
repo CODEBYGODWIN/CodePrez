@@ -75,21 +75,19 @@ const fullScreen = () => {
   } else {
     alert('Aucune slide trouvée. Veuillez ajouter du contenu dans la section Présentation.');
   }
-}
+};
 
-// markdown to html
 const md = new MarkdownIt({
-  html: true,        
-  linkify: true,     
-  typographer: true  
+  html: true,
+  linkify: true,
+  typographer: true
 });
 
 const slides = computed<string[]>(() =>
   markdownText.value
-    .split(/^---$/gm) 
+    .split(/^---$/gm)
     .map(s => md.render(s.trim()))
 );
-
 </script>
 
 <template>
@@ -100,13 +98,12 @@ const slides = computed<string[]>(() =>
   <link rel="stylesheet" href="/src/assets/base.css" />
 </head>
 <body>
-  <PresentationMode 
-    v-if="isPresentationMode" 
-    :slides="slides" 
+  <PresentationMode
+    v-if="isPresentationMode"
+    :slides="slides"
     @close="isPresentationMode = false"
   />
 
-  <!-- Interface Principale -->
   <div class="app">
     <header class="topbar">
       <div class="topbar-left">
@@ -142,11 +139,10 @@ const slides = computed<string[]>(() =>
           <ul> code2.ts </ul>
         </li>
       </div>
-      
+
       <div id="Preview">
         <div v-for="(slide, index) in slides" :key="index" v-html="slide"></div>
       </div>
-
     </main>
   </div>
 </body>
@@ -162,10 +158,10 @@ const slides = computed<string[]>(() =>
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #ffffff;
 }
+
 #Preview > div {
   border: 2px solid #ddd;
   padding: 20px;
@@ -180,8 +176,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-/* Barre supérieure */
 
 .topbar {
   display: flex;
@@ -201,8 +195,6 @@ body {
   color: #333;
 }
 
-/* Boutons */
-
 .btn {
   border: none;
   border-radius: 4px;
@@ -216,8 +208,6 @@ body {
 .btn-primary:hover {
   background: #111;
 }
-
-/* Onglets */
 
 .tabs {
   display: flex;
@@ -240,14 +230,6 @@ body {
   border-bottom: 2px solid #000;
 }
 
-/* Zone principale grise */
-
-.workspace {
-  flex: 1;
-  margin: 8px 16px 16px;
-  background: #e0e0e0;
-}
-/* Zone principale grise + contenus */
 .workspace {
   flex: 1;
   margin: 8px 16px 16px;
@@ -256,15 +238,14 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  min-height: 0; /* Important pour flex */
+  min-height: 0;
 }
 
-/* Textareas */
 .workspace textarea {
   width: 100%;
   height: 100%;
   min-height: 400px;
-  resize: none; /* Désactive redimensionnement manuel */
+  resize: none;
   padding: 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -275,7 +256,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Liste Assets */
 .workspace #Assets {
   width: 100%;
   padding: 12px;
@@ -316,5 +296,4 @@ body {
   line-height: 1.6;
   font-size: 16px;
 }
-
 </style>
