@@ -8,7 +8,8 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
 const markdownText = ref<string>('');
 const stylesheetContent = ref('');
-const folderOpened = ref<string>('');
+const folderOpened = ref<string>('');  // dossier temp extrait (pour assets)
+const codeprezPath = ref<string>('');  // chemin du .codeprez (pour re-save)
 
 const CODEPREZ_FILTER = [{ name: 'CodePrez', extensions: ['codeprez'] }];
 
@@ -21,20 +22,21 @@ async function handleOpen() {
   if (!file) return;
 
   try {
-    const data = await invoke<{ config: string; presentation: string; stylesheet: string }>('open_codeprez', {
+    const data = await invoke<{ config: string; presentation: string; stylesheet: string; temp_folder: string }>('open_codeprez', {
       filePath: file as string,
     });
     configContent.value = data.config;
     markdownText.value = data.presentation;
     stylesheetContent.value = data.stylesheet;
-    folderOpened.value = file as string;
+    folderOpened.value = data.temp_folder;
+    codeprezPath.value = file as string;
   } catch (err) {
     alert(`Erreur lors de l'ouverture :\n${err}`);
   }
 }
 
 async function handleSave() {
-  let filePath = folderOpened.value;
+  let filePath = codeprezPath.value;
 
   if (!filePath) {
     const picked = await save({
@@ -43,8 +45,10 @@ async function handleSave() {
     });
     if (!picked) return;
     filePath = picked as string;
-    folderOpened.value = filePath;
+    codeprezPath.value = filePath;
   }
+
+  const assetsFolder = folderOpened.value ? folderOpened.value + '/assets' : '';
 
   try {
     await invoke('save_codeprez', {
@@ -52,6 +56,7 @@ async function handleSave() {
       config: configContent.value,
       presentation: markdownText.value,
       stylesheet: stylesheetContent.value,
+      assetsFolder,
     });
     alert(`Présentation sauvegardée dans :\n${filePath}`);
   } catch (err) {
