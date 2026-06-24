@@ -2,33 +2,110 @@
 import { computed, ref, onMounted } from 'vue';
 import MarkdownIt from 'markdown-it';
 import PresentationMode from './components/PresentationMode.vue';
+import MarkdownStyle from 'markdown-it-style';
 
-import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+import { open, save } from '@tauri-apps/plugin-dialog';
 
 const configContent = ref('{\n  "title": "",\n  "presenters": [],\n  "duration": 0\n}');
 const markdownText = ref<string>('');
 const stylesheetContent = ref('');
 const isPresentationMode = ref(false);
+const markdownStyle = ref<string>('');
+const folderOpened = ref<string>('');  // dossier temp extrait (pour assets)
+const codeprezPath = ref<string>('');  // chemin du .codeprez (pour re-save)
+const pictures = ref<string[]>([]);
 
-async function handleSave() {
-  const folder = await open({
-    directory: true,
-    title: 'Choisir un dossier de sauvegarde',
+// Expression régulière pour trouver les images Markdown: ![alt](filename)
+const pattern = /!\[(.*?)\]\(([^)\s]+)\)/g;
+
+const CODEPREZ_FILTER = [{ name: 'CodePrez', extensions: ['codeprez'] }];
+
+async function handleOpen() {
+  const file = await open({
+    filters: CODEPREZ_FILTER,
+    title: 'Ouvrir une présentation',
   });
 
-  if (!folder) return;
+  if (!file) return;
 
   try {
-    await invoke('save_project', {
-      folderPath: folder as string,
+    const data = await invoke<{ config: string; presentation: string; stylesheet: string; temp_folder: string }>('open_codeprez', {
+      filePath: file as string,
+    });
+    configContent.value = data.config;
+    markdownText.value = data.presentation;
+    stylesheetContent.value = data.stylesheet;
+    folderOpened.value = data.temp_folder;
+    codeprezPath.value = file as string;
+
+    pictures.value = await invoke<string[]>('list_files', {
+      folderPath: data.temp_folder + '/assets',
+    });
+  } catch (err) {
+    alert(`Erreur lors de l'ouverture :\n${err}`);
+  }
+}
+
+async function handleSave() {
+  let filePath = codeprezPath.value;
+
+  if (!filePath) {
+    const picked = await save({
+      filters: CODEPREZ_FILTER,
+      title: 'Enregistrer la présentation',
+    });
+    if (!picked) return;
+    filePath = picked as string;
+    codeprezPath.value = filePath;
+  }
+
+  const assetsFolder = folderOpened.value ? folderOpened.value + '/assets' : '';
+
+  try {
+    await invoke('save_codeprez', {
+      filePath,
       config: configContent.value,
       presentation: markdownText.value,
-      stylesheet: stylesheetContent.value,
+      stylesheet: markdownStyle.value,
+      assetsFolder,
     });
-    alert(`Projet sauvegardé dans :\n${folder}`);
+    alert(`Présentation sauvegardée dans :\n${filePath}`);
   } catch (err) {
     alert(`Erreur lors de la sauvegarde :\n${err}`);
+  }
+}
+
+async function loadPicture() {
+  if (!folderOpened.value) {
+    folderOpened.value = await invoke<string>('create_temp_project');
+  }
+
+  const file = await open({
+    title: 'Choisir une image',
+    multiple: false,
+    directory: false,
+    filters: [
+      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] },
+    ],
+  });
+
+  if (!file || Array.isArray(file)) return;
+
+  await invoke('copy_image_to_assets', {
+    sourcePath: file,
+    folderPath: folderOpened.value + '/assets',
+  });
+  
+  try {
+    const files = await invoke<string[]>('list_files', {
+      folderPath: folderOpened.value + "/assets" as string,
+    });
+
+    pictures.value = files;
+  }
+  catch (err) {
+    alert(`Erreur lors de l'ouverture :\n${err}`);
   }
 }
 
@@ -83,10 +160,58 @@ const md = new MarkdownIt({
   typographer: true
 });
 
-const slides = computed<string[]>(() =>
-  markdownText.value
-    .split(/^---$/gm)
-    .map(s => md.render(s.trim()))
+function cssToObject(cssString:string) {
+  const result = {};
+  // Supprime les espaces superflus autour des accolades et découpe les blocs
+  const blocks = cssString
+    .replace(/\s*{\s*/g, '{')
+    .replace(/\s*}\s*/g, '}')
+    .trim()
+    .match(/([^{}]+)\{([^{}]*)\}/g);
+
+  if (!blocks) return result;
+
+  for (const block of blocks) {
+    const match = block.match(/([^{}]+)\{([^{}]*)\}/);
+    if (!match) continue;
+
+    const selector = match[1].trim();
+    let styles = match[2].trim();
+
+    // Supprime les points-virgules en fin de chaîne et partout pour uniformiser
+    styles = styles.replace(/;+$/, '').replace(/;\s*/g, ';');
+
+    result[selector] = styles;
+  }
+
+  return result;
+}
+
+const slides = computed<string[]>(() =>{
+  var obj = cssToObject(markdownStyle.value);
+  md.use(MarkdownStyle, obj);
+  var cheminPrefixe = folderOpened.value+"\\assets\\";
+  const resultat = markdownText.value.replace(pattern, (match, altText, currentFilename) => {
+  // Vérifier si le chemin est déjà présent
+  const adejaChemin = 
+    currentFilename.startsWith("/") || 
+    currentFilename.startsWith("./") || 
+    currentFilename.startsWith("../") ||
+    currentFilename.startsWith("http://") || 
+    currentFilename.startsWith("https://");
+  
+  if (adejaChemin) {
+    // Chemin déjà présent, ne rien modifier
+    return match;
+  }
+  
+  // Ajouter le préfixe de chemin
+  const newPath = convertFileSrc(`${cheminPrefixe}${currentFilename}`);
+  return `![${altText}](${newPath})`;
+  });
+
+  return resultat.split(/^---$/gm).map(s => md.render(s.trim()));
+},
 );
 </script>
 
@@ -109,7 +234,7 @@ const slides = computed<string[]>(() =>
       <div class="topbar-left">
         <button class="btn btn-primary">New prez</button>
         <button class="btn btn-primary" @click="handleSave">Save</button>
-        <button class="btn btn-primary">Open</button>
+        <button class="btn btn-primary" @click="handleOpen">Open</button>
       </div>
       <div class="topbar-title" id="PrezName">non prez</div>
       <div class="topbar-right">
@@ -128,15 +253,14 @@ const slides = computed<string[]>(() =>
     <main class="workspace">
       <textarea id="Config" v-model="configContent"></textarea>
       <textarea id="Prez" v-model="markdownText" rows="8" cols="50"></textarea>
-      <textarea id="Stylesheet" v-model="stylesheetContent"></textarea>
+      <textarea id="Stylesheet" v-model="markdownStyle"></textarea>
 
       <div id="Assets">
-        <button id="AddAsset" class="btn btn-primary">Add +</button>
+        <button id="AddAsset" class="btn btn-primary" @click="loadPicture">Add +</button>
         <li>
-          <ul> image.png </ul>
-          <ul> image2.jpg </ul>
-          <ul> code.js </ul>
-          <ul> code2.ts </ul>
+          <ul v-for="(picture, index) in pictures" :key="index">
+            {{ picture }}
+          </ul>
         </li>
       </div>
 
