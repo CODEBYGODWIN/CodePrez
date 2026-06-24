@@ -21,6 +21,11 @@ const pattern = /!\[(.*?)\]\(([^)\s]+)\)/g;
 
 const CODEPREZ_FILTER = [{ name: 'CodePrez', extensions: ['codeprez'] }];
 
+const prezTitle = computed(() => {
+  if (!codeprezPath.value) return 'New presentation';
+  return codeprezPath.value.split(/[\\/]/).pop()?.replace('.codeprez', '') ?? 'New presentation';
+});
+
 async function handleOpen() {
   const file = await open({
     filters: CODEPREZ_FILTER,
@@ -215,7 +220,16 @@ const slides = computed<string[]>(() =>{
   return `![${altText}](${newPath})`;
   });
 
-  return resultat.split(/^---$/gm).map(s => md.render(s.trim()));
+  const slideList = resultat.split(/^---$/gm).map(s => md.render(s.trim()));
+
+  // Diapositive de titre générée depuis config.json
+  try {
+    const config = JSON.parse(configContent.value);
+    const presenters = Array.isArray(config.presenters) ? config.presenters.join(', ') : '';
+    slideList.unshift(`<h1>${config.title ?? ''}</h1>${presenters ? `<p>${presenters}</p>` : ''}`);
+  } catch { /* config.json invalide, on ignore */ }
+
+  return slideList;
 },
 );
 </script>
@@ -240,7 +254,7 @@ const slides = computed<string[]>(() =>{
         <button class="btn btn-primary" @click="handleSave">Save</button>
         <button class="btn btn-primary" @click="handleOpen">Open</button>
       </div>
-      <div class="topbar-title" id="PrezName">non prez</div>
+      <div class="topbar-title" id="PrezName">{{ prezTitle }}</div>
       <div class="topbar-right">
         <button class="btn btn-primary" @click="fullScreen">Presentation</button>
       </div>
