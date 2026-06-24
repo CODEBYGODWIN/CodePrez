@@ -30,6 +30,20 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["codeprez"],
+        "name": "CodePrez Presentation",
+        "description": "Fichier de présentation CodePrez",
+        "mimeType": "application/x-codeprez"
+      }
+    ],
+    "windows": {
+      "nsis": {
+        "languages": ["French"],
+        "installMode": "currentUser"
+      }
+    }
   }
 }

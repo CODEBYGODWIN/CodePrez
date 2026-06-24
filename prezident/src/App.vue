@@ -3,6 +3,7 @@ import { computed, ref, onMounted } from 'vue';
 import MarkdownIt from 'markdown-it';
 import PresentationMode from './components/PresentationMode.vue';
 import MarkdownStyle from 'markdown-it-style';
+import './style/app.css';
 
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
@@ -171,7 +172,7 @@ const md = new MarkdownIt({
 });
 
 function cssToObject(cssString:string) {
-  const result = {};
+  const result: Record<string, string> = {};
   // Supprime les espaces superflus autour des accolades et découpe les blocs
   const blocks = cssString
     .replace(/\s*{\s*/g, '{')
@@ -275,11 +276,9 @@ const slides = computed<string[]>(() =>{
 
       <div id="Assets">
         <button id="AddAsset" class="btn btn-primary" @click="loadPicture">Add +</button>
-        <li>
-          <ul v-for="(picture, index) in pictures" :key="index">
-            {{ picture }}
-          </ul>
-        </li>
+        <ul class="asset-list">
+          <li v-for="(picture, index) in pictures" :key="index">{{ picture }}</li>
+        </ul>
       </div>
 
       <div id="Preview">
@@ -290,152 +289,3 @@ const slides = computed<string[]>(() =>{
 </body>
 </html>
 </template>
-
-<style>
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #ffffff;
-}
-
-#Preview > div {
-  border: 2px solid #ddd;
-  padding: 20px;
-  margin: 10px 0;
-  page-break-after: always;
-  min-height: 400px;
-  background-color: #fafafa;
-}
-
-.app {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-}
-
-.topbar-left,
-.topbar-right {
-  display: flex;
-  gap: 8px;
-}
-
-.topbar-title {
-  font-size: 14px;
-  color: #333;
-}
-
-.btn {
-  border: none;
-  border-radius: 4px;
-  padding: 8px 14px;
-  font-size: 13px;
-  cursor: pointer;
-  background: #333;
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background: #111;
-}
-
-.tabs {
-  display: flex;
-  gap: 16px;
-  padding: 0 16px;
-  border-bottom: 1px solid #ddd;
-  font-size: 13px;
-}
-
-.tab {
-  border: none;
-  background: transparent;
-  padding: 8px 0;
-  cursor: pointer;
-  color: #555;
-}
-
-.tab.active {
-  color: #000;
-  border-bottom: 2px solid #000;
-}
-
-.workspace {
-  flex: 1;
-  margin: 8px 16px 16px;
-  background: #e0e0e0;
-  padding: 16px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  min-height: 0;
-}
-
-.workspace textarea {
-  width: 100%;
-  height: 100%;
-  min-height: 400px;
-  resize: none;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  background: white;
-  box-sizing: border-box;
-}
-
-.workspace #Assets {
-  width: 100%;
-  padding: 12px;
-  background: white;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  list-style: none;
-}
-
-.workspace #Assets ul {
-  padding: 8px 12px;
-  margin: 4px 0;
-  background: #f8f9fa;
-  border-radius: 4px;
-  border-left: 3px solid #007bff;
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 13px;
-}
-
-.workspace #Preview {
-  width: 100%;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 16px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.slide {
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 20px;
-  min-height: 300px;
-  line-height: 1.6;
-  font-size: 16px;
-}
-</style>
