@@ -4,8 +4,26 @@ use std::sync::Mutex;
 use zip::write::SimpleFileOptions;
 use zip::ZipArchive;
 use tauri::Manager;
+use std::path::PathBuf;
+
 
 struct TempFolder(Mutex<Option<String>>);
+
+fn new_temp_dir(state: &tauri::State<TempFolder>) -> Result<PathBuf, String> {
+    if let Some(old) = state.0.lock().unwrap().take() {
+        let _ = fs::remove_dir_all(&old);
+    }
+    let ts = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+    let temp_dir = std::env::temp_dir().join(format!("codeprez_{}", ts));
+    fs::create_dir_all(temp_dir.join("assets")).map_err(|e| e.to_string())?;
+    fs::create_dir_all(temp_dir.join("env")).map_err(|e| e.to_string())?;
+    let path = temp_dir.to_string_lossy().to_string();
+    *state.0.lock().unwrap() = Some(path);
+    Ok(temp_dir)
+}
 
 #[derive(serde::Serialize)]
 struct OpenResult {
@@ -16,23 +34,20 @@ struct OpenResult {
 }
 
 #[tauri::command]
+fn create_temp_project(state: tauri::State<TempFolder>) -> Result<String, String> {
+    let temp_dir = new_temp_dir(&state)?;
+    Ok(temp_dir.to_string_lossy().to_string())
+}
+
+#[tauri::command]
 fn open_codeprez(
     file_path: String,
     state: tauri::State<TempFolder>,
 ) -> Result<OpenResult, String> {
-    if let Some(old) = state.0.lock().unwrap().take() {
-        let _ = fs::remove_dir_all(&old);
-    }
+    let temp_dir = new_temp_dir(&state)?;
 
     let file = fs::File::open(&file_path).map_err(|e| e.to_string())?;
     let mut archive = ZipArchive::new(file).map_err(|e| e.to_string())?;
-
-    let ts = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
-    let temp_dir = std::env::temp_dir().join(format!("codeprez_{}", ts));
-    fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
 
     for i in 0..archive.len() {
         let mut entry = archive.by_index(i).map_err(|e| e.to_string())?;
@@ -55,8 +70,6 @@ fn open_codeprez(
     let presentation = fs::read_to_string(temp_dir.join("presentation.md")).map_err(|e| e.to_string())?;
     let stylesheet = fs::read_to_string(temp_dir.join("style.css")).map_err(|e| e.to_string())?;
     let temp_folder = temp_dir.to_string_lossy().to_string();
-
-    *state.0.lock().unwrap() = Some(temp_folder.clone());
 
     Ok(OpenResult { config, presentation, stylesheet, temp_folder })
 }
@@ -104,13 +117,53 @@ fn save_codeprez(
     Ok(())
 }
 
+#[tauri::command]
+fn list_files(folder_path: String) -> Result<Vec<String>, String> {
+  let entries = std::fs::read_dir(folder_path)
+    .map_err(|e| e.to_string())?;
+
+  let mut files = Vec::new();
+
+  for entry in entries {
+    let entry = entry.map_err(|e| e.to_string())?;
+    let path = entry.path();
+
+    if path.is_file() {
+      if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+        files.push(name.to_string());
+      }
+    }
+  }
+
+  Ok(files)
+}
+
+#[tauri::command]
+fn copy_image_to_assets(source_path: String, folder_path: String) -> Result<(), String> {
+  let source = PathBuf::from(&source_path);
+  let file_name = source
+    .file_name()
+    .ok_or("Nom de fichier invalide")?
+    .to_owned();
+
+  let dest_dir = PathBuf::from(&folder_path);
+  fs::create_dir_all(&dest_dir).map_err(|e| e.to_string())?;
+  let destination = dest_dir.join(file_name);
+
+  fs::copy(&source, &destination)
+    .map(|_| ())
+    .map_err(|e| e.to_string())
+}
+
+
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(TempFolder(Mutex::new(None)))
-        .invoke_handler(tauri::generate_handler![save_codeprez, open_codeprez])
+        .invoke_handler(tauri::generate_handler![save_codeprez, open_codeprez, create_temp_project, list_files, copy_image_to_assets])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
         .run(|app, event| {
