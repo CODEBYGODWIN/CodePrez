@@ -129,6 +129,11 @@ onMounted(() => {
   hideAllSections();
   sections.Config?.style.setProperty('display', 'block');
 
+  window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 's') { e.preventDefault(); handleSave(); }
+    if (e.ctrlKey && e.key === 'o') { e.preventDefault(); handleOpen(); }
+  });
+
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       tabs.forEach((t) => t.classList.remove('active'));
@@ -232,7 +237,6 @@ const slides = computed<string[]>(() =>{
   <div class="app">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="btn btn-primary">New prez</button>
         <button class="btn btn-primary" @click="handleSave">Save</button>
         <button class="btn btn-primary" @click="handleOpen">Open</button>
       </div>
