@@ -42,6 +42,7 @@ async function handleOpen() {
     configContent.value = data.config;
     markdownText.value = data.presentation;
     stylesheetContent.value = data.stylesheet;
+    markdownStyle.value = data.stylesheet;
     folderOpened.value = data.temp_folder;
     codeprezPath.value = file as string;
 
@@ -211,8 +212,8 @@ const slides = computed<string[]>(() =>{
     currentFilename.startsWith("http://") || 
     currentFilename.startsWith("https://");
   
-  if (adejaChemin) {
-    // Chemin déjà présent, ne rien modifier
+  if (adejaChemin || !folderOpened.value) {
+    // Chemin déjà présent ou pas de projet ouvert, ne rien modifier
     return match;
   }
   
@@ -240,7 +241,6 @@ const slides = computed<string[]>(() =>{
 <head>
   <meta charset="UTF-8" />
   <title>non prez</title>
-  <link rel="stylesheet" href="/src/assets/base.css" />
 </head>
 <body>
   <PresentationMode
